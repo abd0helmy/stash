@@ -1,10 +1,12 @@
-using Drive.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using Drive.Application;
+using Drive.Application.Options;
+using Drive.Infrastructure;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<DriveDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(builder.Configuration);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

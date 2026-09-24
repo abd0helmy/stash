@@ -7,10 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.13" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Drive.Application\Drive.Application.csproj" />
       <ProjectReference Include="..\Drive.Core\Drive.Core.csproj" />
     </ItemGroup>
 
