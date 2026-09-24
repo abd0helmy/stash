@@ -38,4 +38,22 @@ public sealed record Error(
 
     public static Error Unauthenticated(string code, string description) =>
         new(code, description, ErrorType.Unauthenticated);
+
+    public static readonly Error InternalServerError =
+        new(
+            "Error.InternalServerError",
+            "An internal server error occurred.",
+            ErrorType.Failure);
+
+    public static readonly Error InvalidCredentials =
+        new(
+            "Auth.InvalidCredentials",
+            "The username/email or password is incorrect.",
+            ErrorType.Unauthenticated);
+    
+    public static readonly Error InvalidRefreshToken =
+        new(
+            "Auth.InvalidRefreshToken",
+            "The refresh token is invalid or has expired.",
+            ErrorType.Unauthenticated);
 }
