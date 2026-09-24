@@ -5,5 +5,6 @@ namespace Drive.Application.Authentication.Interfaces;
 public interface ITokenService
 {
     string GenerateAccessToken(User user);
-    string GenerateRefreshToken();
+    public string GenerateRefreshToken();
+    public string HashRefreshToken(string token);
 }

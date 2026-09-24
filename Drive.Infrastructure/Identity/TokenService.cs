@@ -50,4 +50,12 @@ public class TokenService(IOptions<JwtOptions> options): ITokenService
 
         return WebEncoders.Base64UrlEncode(bytes);
     }
+    
+    public string HashRefreshToken(string token)
+    {
+        var hashBytes = SHA256.HashData(
+            Encoding.UTF8.GetBytes(token));
+
+        return Convert.ToHexString(hashBytes);
+    }
 }
