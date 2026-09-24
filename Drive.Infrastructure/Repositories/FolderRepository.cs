@@ -85,6 +85,44 @@ public class FolderRepository(DriveDbContext context) : IFolderRepository
             .ToListAsync(ct);
     }
 
+    public async Task<Folder?> GetTrashedRootByIdAsync(
+        Guid id, Guid ownerId, CancellationToken cancellationToken = default)
+    {
+        var deleted = context.Folders
+            .IgnoreQueryFilters()
+            .Where(f => f.OwnerId == ownerId && f.DeletedAt != null);
+
+        return await deleted
+            .Where(f => f.Id == id
+                        && (f.ParentFolderId == null
+                            || !deleted.Any(p => p.Id == f.ParentFolderId && p.DeletedAt == f.DeletedAt)))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<List<Folder>> GetDeletedDescendantsAsync(
+        Guid folderId, Guid ownerId, DateTime deletedAt, CancellationToken cancellationToken = default)
+    {
+        var result = new List<Folder>();
+        var currentLevel = new List<Guid> { folderId };
+
+        while (currentLevel.Count > 0)
+        {
+            var level = currentLevel;
+            var children = await context.Folders
+                .IgnoreQueryFilters()
+                .Where(f => f.OwnerId == ownerId
+                            && f.DeletedAt == deletedAt
+                            && f.ParentFolderId != null
+                            && level.Contains(f.ParentFolderId.Value))
+                .ToListAsync(cancellationToken);
+
+            result.AddRange(children);
+            currentLevel = children.Select(f => f.Id).ToList();
+        }
+
+        return result;
+    }
+
     public async Task AddAsync(Folder folder, CancellationToken cancellationToken = default)
     {
         await context.Folders.AddAsync(folder, cancellationToken);
@@ -98,5 +136,62 @@ public class FolderRepository(DriveDbContext context) : IFolderRepository
     public void Delete(Folder folder)
     {
         context.Folders.Remove(folder);
+    }
+
+    public async Task<List<Folder>> GetSubtreeIncludingDeletedAsync(
+        Guid folderId, Guid ownerId, CancellationToken cancellationToken = default)
+    {
+        var result = new List<Folder>();
+        var currentLevel = new List<Guid> { folderId };
+
+        while (currentLevel.Count > 0)
+        {
+            var level = currentLevel;
+            var children = await context.Folders
+                .IgnoreQueryFilters()
+                .Where(f => f.OwnerId == ownerId
+                            && f.ParentFolderId != null
+                            && level.Contains(f.ParentFolderId.Value))
+                .ToListAsync(cancellationToken);
+
+            result.AddRange(children);
+            currentLevel = children.Select(f => f.Id).ToList();
+        }
+
+        return result;
+    }
+
+    public void DeleteRange(IEnumerable<Folder> folders)
+    {
+        context.Folders.RemoveRange(folders);
+    }
+
+    public async Task<int> PurgeExpiredAsync(DateTime cutoff, CancellationToken cancellationToken = default)
+    {
+        const int batchSize = 500;
+        var total = 0;
+
+        while (true)
+        {
+            var ids = await context.Folders
+                .IgnoreQueryFilters()
+                .Where(f => f.DeletedAt != null && f.DeletedAt < cutoff)
+                .Where(f => !context.Folders.IgnoreQueryFilters().Any(c => c.ParentFolderId == f.Id))
+                .Select(f => f.Id)
+                .Take(batchSize)
+                .ToListAsync(cancellationToken);
+
+            if (ids.Count == 0)
+                break;
+
+            await context.Folders
+                .IgnoreQueryFilters()
+                .Where(f => ids.Contains(f.Id))
+                .ExecuteDeleteAsync(cancellationToken);
+
+            total += ids.Count;
+        }
+
+        return total;
     }
 }

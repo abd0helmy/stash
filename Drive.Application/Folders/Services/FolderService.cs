@@ -249,4 +249,73 @@ public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitO
 
         return Result<IEnumerable<FolderResponse>>.Success(response);
     }
+
+    public async Task<Result> RestoreAsync(Guid id, Guid ownerId,
+        CancellationToken cancellationToken = default)
+    {
+        var folder = await folderRepository.GetTrashedRootByIdAsync(id, ownerId, cancellationToken);
+
+        if (folder is null)
+        {
+            return Result.Failure(
+                new Error(
+                    "Folder.NotFoundInTrash",
+                    "The specified folder was not found in the trash.",
+                    ErrorType.NotFound));
+        }
+
+        var descendants = await folderRepository.GetDeletedDescendantsAsync(
+            id, ownerId, folder.DeletedAt!.Value, cancellationToken);
+
+        if (folder.ParentFolderId.HasValue)
+        {
+            var parent = await folderRepository.GetByIdAsync(
+                folder.ParentFolderId.Value, ownerId, cancellationToken);
+
+            if (parent is null)
+            {
+                folder.ParentFolderId = null;
+            }
+        }
+
+        folder.DeletedAt = null;
+
+        foreach (var descendant in descendants)
+        {
+            descendant.DeletedAt = null;
+        }
+
+        if (await unitOfWork.SaveChangesAsync(cancellationToken) == 0)
+        {
+            return Result.Failure(Error.InternalServerError);
+        }
+
+        return Result.Success();
+    }
+    
+    public async Task<Result> DeleteForeverAsync(Guid id, Guid ownerId,
+        CancellationToken cancellationToken = default)
+    {
+        var folder = await folderRepository.GetTrashedRootByIdAsync(id, ownerId, cancellationToken);
+
+        if (folder is null)
+        {
+            return Result.Failure(
+                new Error(
+                    "Folder.NotFoundInTrash",
+                    "The specified folder was not found in the trash.",
+                    ErrorType.NotFound));
+        }
+
+        var subtree = await folderRepository.GetSubtreeIncludingDeletedAsync(id, ownerId, cancellationToken);
+
+        folderRepository.DeleteRange(subtree.Append(folder));
+
+        if (await unitOfWork.SaveChangesAsync(cancellationToken) == 0)
+        {
+            return Result.Failure(Error.InternalServerError);
+        }
+
+        return Result.Success();
+    }
 }

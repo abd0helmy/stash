@@ -40,4 +40,7 @@ public interface IFolderService
 
     Task<Result<IEnumerable<FolderResponse>>>
         GetTrashAsync(Guid ownerId, CancellationToken cancellationToken = default);
+    Task<Result> RestoreAsync(Guid id, Guid ownerId, CancellationToken cancellationToken = default);
+    
+    Task<Result> DeleteForeverAsync(Guid id, Guid ownerId, CancellationToken cancellationToken = default);
 }
