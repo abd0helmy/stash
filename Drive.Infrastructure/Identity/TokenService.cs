@@ -1,9 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Drive.Application.Authentication.Interfaces;
 using Drive.Application.Options;
 using Drive.Core.Entities;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -40,5 +42,12 @@ public class TokenService(IOptions<JwtOptions> options): ITokenService
 
         return new JwtSecurityTokenHandler()
             .WriteToken(token);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(64);
+
+        return WebEncoders.Base64UrlEncode(bytes);
     }
 }
