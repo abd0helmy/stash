@@ -1,0 +1,25 @@
+using Drive.Core.Enums;
+
+namespace Drive.Core.Entities;
+
+public class User
+{
+    public Guid Id { get; set; }
+
+    public string Username { get; set; } = null!;
+
+    public string Email { get; set; } = null!;
+
+    public string PasswordHash { get; set; } = null!;
+
+    public UserRole Role { get; set; } = UserRole.User;
+
+    public bool IsEmailVerified { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
+
+    public ICollection<RefreshToken> RefreshTokens { get; set; }
+        = new List<RefreshToken>();
+}
