@@ -3,9 +3,9 @@ using Drive.Application.Authentication.Interfaces;
 using Drive.Core.Common;
 using Drive.Core.Common.Result;
 using Drive.Core.Entities;
-using Drive.Core.Interfaces;
+using Drive.Application.Interfaces;
 
-namespace Drive.Infrastructure.Identity;
+namespace Drive.Application.Authentication.Services;
 
 public class AuthService(
     ITokenService tokenService,
