@@ -1,5 +1,9 @@
+using Drive.Application.Authentication.Interfaces;
+using Drive.Application.Folders.Interfaces;
+using Drive.Application.Interfaces;
 using Drive.Core.Entities;
 using Drive.Infrastructure.Persistence;
+using Drive.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +22,12 @@ public static class DependencyInjection
         services.AddDbContext<DriveDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IFolderRepository, FolderRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
         return services;
     }
 }

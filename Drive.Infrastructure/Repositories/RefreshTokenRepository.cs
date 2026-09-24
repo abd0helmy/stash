@@ -1,4 +1,4 @@
-using Drive.Application.Interfaces;
+using Drive.Application.Authentication.Interfaces;
 using Drive.Core.Entities;
 using Drive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
