@@ -1,4 +1,4 @@
-namespace Drive.Core.Interfaces;
+namespace Drive.Application.Interfaces;
 
 public interface IUnitOfWork
 {

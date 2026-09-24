@@ -1,4 +1,4 @@
-using Drive.Core.Interfaces;
+using Drive.Application.Interfaces;
 using Drive.Infrastructure.Persistence;
 
 namespace Drive.Infrastructure.Repositories;

@@ -1,6 +1,7 @@
 using Drive.Core.Entities;
 
-namespace Drive.Core.Interfaces;
+namespace Drive.Application.Authentication.Interfaces;
+
 
 public interface IRefreshTokenRepository
 {
