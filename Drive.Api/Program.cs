@@ -1,5 +1,5 @@
 using Drive.Application;
-using Drive.Application.Options;
+using Drive.Application.Authentication.Options;
 using Drive.Infrastructure;
 
 

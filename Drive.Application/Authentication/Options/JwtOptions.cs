@@ -1,4 +1,4 @@
-namespace Drive.Application.Options;
+namespace Drive.Application.Authentication.Options;
 
 public class JwtOptions
 {

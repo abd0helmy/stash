@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Drive.Application.Authentication.Interfaces;
-using Drive.Application.Options;
+using Drive.Application.Authentication.Options;
 using Drive.Core.Entities;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
