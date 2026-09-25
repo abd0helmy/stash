@@ -80,7 +80,7 @@ public class FolderRepository(DriveDbContext context) : IFolderRepository
 
         return await deleted
             .Where(f => f.ParentFolderId == null
-                        || !deleted.Any(p => p.Id == f.ParentFolderId && p.DeletedAt == f.DeletedAt))
+                        || !deleted.Any(p => p.Id == f.ParentFolderId))
             .OrderByDescending(f => f.DeletedAt)
             .ToListAsync(ct);
     }
@@ -95,7 +95,7 @@ public class FolderRepository(DriveDbContext context) : IFolderRepository
         return await deleted
             .Where(f => f.Id == id
                         && (f.ParentFolderId == null
-                            || !deleted.Any(p => p.Id == f.ParentFolderId && p.DeletedAt == f.DeletedAt)))
+                            || !deleted.Any(p => p.Id == f.ParentFolderId)))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -104,6 +104,8 @@ public class FolderRepository(DriveDbContext context) : IFolderRepository
     {
         var result = new List<Folder>();
         var currentLevel = new List<Guid> { folderId };
+        var minDeletedAt = deletedAt.AddSeconds(-2);
+        var maxDeletedAt = deletedAt.AddSeconds(2);
 
         while (currentLevel.Count > 0)
         {
@@ -111,7 +113,9 @@ public class FolderRepository(DriveDbContext context) : IFolderRepository
             var children = await context.Folders
                 .IgnoreQueryFilters()
                 .Where(f => f.OwnerId == ownerId
-                            && f.DeletedAt == deletedAt
+                            && f.DeletedAt != null
+                            && f.DeletedAt >= minDeletedAt
+                            && f.DeletedAt <= maxDeletedAt
                             && f.ParentFolderId != null
                             && level.Contains(f.ParentFolderId.Value))
                 .ToListAsync(cancellationToken);

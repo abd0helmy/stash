@@ -1,13 +1,18 @@
+using Drive.Core.Common;
+using Drive.Application.Files.Interfaces;
 using Drive.Application.Folders.DTOs;
 using Drive.Application.Folders.Interfaces;
 using Drive.Application.Interfaces;
-using Drive.Core.Common;
 using Drive.Core.Common.Result;
 using Drive.Core.Entities;
 
 namespace Drive.Application.Folders.Services;
 
-public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitOfWork) : IFolderService
+public class FolderService(
+    IFolderRepository folderRepository,
+    IFileRepository fileRepository,
+    IObjectStorage objectStorage,
+    IUnitOfWork unitOfWork) : IFolderService
 {
     public async Task<Result<FolderResponse>> GetByIdAsync(Guid id, Guid ownerId,
         CancellationToken cancellationToken = default)
@@ -23,23 +28,24 @@ public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitO
                     ErrorType.NotFound));
         }
 
-        return Result<FolderResponse>.Success(new FolderResponse(folder.Id, folder.Name, folder.ParentFolderId,
-            folder.OwnerId, folder.CreatedAt, folder.UpdatedAt));
+        return Result<FolderResponse>.Success(
+            new FolderResponse(
+                folder.Id,
+                folder.Name,
+                folder.ParentFolderId,
+                folder.OwnerId,
+                folder.CreatedAt,
+                folder.UpdatedAt));
     }
 
-    public async Task<Result<IEnumerable<FolderResponse>>> GetChildrenAsync(
-        Guid? parentFolderId,
-        Guid ownerId,
+    public async Task<Result<IEnumerable<FolderResponse>>> GetChildrenAsync(Guid? parentFolderId, Guid ownerId,
         CancellationToken cancellationToken = default)
     {
         if (parentFolderId.HasValue)
         {
-            var parentFolder = await folderRepository.GetByIdAsync(
-                parentFolderId.Value,
-                ownerId,
-                cancellationToken);
+            var parent = await folderRepository.GetByIdAsync(parentFolderId.Value, ownerId, cancellationToken);
 
-            if (parentFolder is null)
+            if (parent is null)
             {
                 return Result<IEnumerable<FolderResponse>>.Failure(
                     new Error(
@@ -49,21 +55,17 @@ public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitO
             }
         }
 
-        var folders = await folderRepository.GetChildrenAsync(
-            parentFolderId,
-            ownerId,
-            cancellationToken);
+        var folders = await folderRepository.GetChildrenAsync(parentFolderId, ownerId, cancellationToken);
 
-        var responses = folders.Select(folder =>
-            new FolderResponse(
-                folder.Id,
-                folder.Name,
-                folder.ParentFolderId,
-                folder.OwnerId,
-                folder.CreatedAt,
-                folder.UpdatedAt));
+        var response = folders.Select(folder => new FolderResponse(
+            folder.Id,
+            folder.Name,
+            folder.ParentFolderId,
+            folder.OwnerId,
+            folder.CreatedAt,
+            folder.UpdatedAt));
 
-        return Result<IEnumerable<FolderResponse>>.Success(responses);
+        return Result<IEnumerable<FolderResponse>>.Success(response);
     }
 
     public async Task<Result<FolderResponse>> CreateAsync(
@@ -216,6 +218,9 @@ public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitO
         }
 
         var descendants = await folderRepository.GetDescendantsAsync(id, ownerId, cancellationToken);
+        var allFolderIds = descendants.Select(d => d.Id).Append(folder.Id).ToList();
+
+        var files = await fileRepository.GetByFolderIdsAsync(allFolderIds, ownerId, cancellationToken);
 
         var deletedAt = DateTime.UtcNow;
 
@@ -224,6 +229,11 @@ public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitO
         foreach (var descendant in descendants)
         {
             descendant.DeletedAt = deletedAt;
+        }
+
+        foreach (var file in files)
+        {
+            file.DeletedAt = deletedAt;
         }
 
         if (await unitOfWork.SaveChangesAsync(cancellationToken) == 0)
@@ -264,8 +274,13 @@ public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitO
                     ErrorType.NotFound));
         }
 
+        var deletedAt = folder.DeletedAt!.Value;
         var descendants = await folderRepository.GetDeletedDescendantsAsync(
-            id, ownerId, folder.DeletedAt!.Value, cancellationToken);
+            id, ownerId, deletedAt, cancellationToken);
+
+        var allFolderIds = descendants.Select(d => d.Id).Append(folder.Id).ToList();
+        var files = await fileRepository.GetDeletedFilesInFoldersAsync(
+            allFolderIds, ownerId, deletedAt, cancellationToken);
 
         if (folder.ParentFolderId.HasValue)
         {
@@ -283,6 +298,11 @@ public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitO
         foreach (var descendant in descendants)
         {
             descendant.DeletedAt = null;
+        }
+
+        foreach (var file in files)
+        {
+            file.DeletedAt = null;
         }
 
         if (await unitOfWork.SaveChangesAsync(cancellationToken) == 0)
@@ -308,8 +328,25 @@ public class FolderService(IFolderRepository folderRepository, IUnitOfWork unitO
         }
 
         var subtree = await folderRepository.GetSubtreeIncludingDeletedAsync(id, ownerId, cancellationToken);
+        var allFolders = subtree.Append(folder).ToList();
+        var allFolderIds = allFolders.Select(f => f.Id).ToList();
 
-        folderRepository.DeleteRange(subtree.Append(folder));
+        var files = await fileRepository.GetByFolderIdsIncludingDeletedAsync(allFolderIds, ownerId, cancellationToken);
+
+        foreach (var file in files)
+        {
+            try
+            {
+                await objectStorage.DeleteAsync(file.ObjectKey, cancellationToken);
+            }
+            catch
+            {
+                // Continue to ensure database cleanup
+            }
+        }
+
+        fileRepository.DeleteRange(files);
+        folderRepository.DeleteRange(allFolders);
 
         if (await unitOfWork.SaveChangesAsync(cancellationToken) == 0)
         {
