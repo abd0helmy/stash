@@ -10,6 +10,7 @@ public class DriveDbContext(DbContextOptions<DriveDbContext> options) : DbContex
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Folder> Folders => Set<Folder>();
     public DbSet<File> Files => Set<File>();
+    public DbSet<ItemShare> ItemShares => Set<ItemShare>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
