@@ -28,15 +28,7 @@ public class FileService(
                     ErrorType.NotFound));
         }
 
-        return Result<FileResponse>.Success(
-            new FileResponse(
-                file.Id,
-                file.Name,
-                file.MimeType,
-                file.Size,
-                file.FolderId,
-                file.CreatedAt,
-                file.UpdatedAt));
+        return Result<FileResponse>.Success(MapToResponse(file));
     }
 
     public async Task<Result<FileResponse>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -52,15 +44,7 @@ public class FileService(
                     ErrorType.NotFound));
         }
 
-        return Result<FileResponse>.Success(
-            new FileResponse(
-                file.Id,
-                file.Name,
-                file.MimeType,
-                file.Size,
-                file.FolderId,
-                file.CreatedAt,
-                file.UpdatedAt));
+        return Result<FileResponse>.Success(MapToResponse(file));
     }
 
     public async Task<Result<IEnumerable<FileResponse>>> GetByFolderIdAsync(Guid? folderId, Guid ownerId,
@@ -82,19 +66,8 @@ public class FileService(
 
         var files = await fileRepository.GetByFolderIdAsync(folderId, ownerId, cancellationToken);
 
-        var response = files
-            .Select(file =>
-                new FileResponse(
-                    file.Id,
-                    file.Name,
-                    file.MimeType,
-                    file.Size,
-                    file.FolderId,
-                    file.CreatedAt,
-                    file.UpdatedAt
-                ));
-
-        return Result<IEnumerable<FileResponse>>.Success(response);
+        return Result<IEnumerable<FileResponse>>.Success( files
+            .Select(MapToResponse));
     }
 
     public async Task<Result<IEnumerable<FileResponse>>> GetTrashAsync(Guid ownerId,
@@ -102,19 +75,8 @@ public class FileService(
     {
         var files = await fileRepository.GetTrashedRootsAsync(ownerId, cancellationToken);
 
-        var response = files
-            .Select(file =>
-                new FileResponse(
-                    file.Id,
-                    file.Name,
-                    file.MimeType,
-                    file.Size,
-                    file.FolderId,
-                    file.CreatedAt,
-                    file.UpdatedAt
-                ));
-
-        return Result<IEnumerable<FileResponse>>.Success(response);
+        return Result<IEnumerable<FileResponse>>.Success(files
+            .Select(MapToResponse));
     }
 
     public async Task<Result<FileResponse>> UploadAsync(
@@ -209,15 +171,7 @@ public class FileService(
                 Error.InternalServerError);
         }
 
-        return Result<FileResponse>.Success(
-            new FileResponse(
-                file.Id,
-                file.Name,
-                file.MimeType,
-                file.Size,
-                file.FolderId,
-                file.CreatedAt,
-                file.UpdatedAt));
+        return Result<FileResponse>.Success(MapToResponse(file));
     }
 
     public async Task<Result> RenameAsync(Guid id, string name, Guid ownerId,
@@ -383,4 +337,7 @@ public class FileService(
 
         return Result.Success();
     }
+
+    private static FileResponse MapToResponse(File file) =>
+        new(file.Id, file.Name, file.MimeType, file.Size, file.FolderId, file.CreatedAt, file.UpdatedAt);
 }

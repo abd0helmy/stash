@@ -28,14 +28,7 @@ public class FolderService(
                     ErrorType.NotFound));
         }
 
-        return Result<FolderResponse>.Success(
-            new FolderResponse(
-                folder.Id,
-                folder.Name,
-                folder.ParentFolderId,
-                folder.OwnerId,
-                folder.CreatedAt,
-                folder.UpdatedAt));
+        return Result<FolderResponse>.Success(MapToResponse(folder));
     }
 
     public async Task<Result<IEnumerable<FolderResponse>>> GetChildrenAsync(Guid? parentFolderId, Guid ownerId,
@@ -57,15 +50,7 @@ public class FolderService(
 
         var folders = await folderRepository.GetChildrenAsync(parentFolderId, ownerId, cancellationToken);
 
-        var response = folders.Select(folder => new FolderResponse(
-            folder.Id,
-            folder.Name,
-            folder.ParentFolderId,
-            folder.OwnerId,
-            folder.CreatedAt,
-            folder.UpdatedAt));
-
-        return Result<IEnumerable<FolderResponse>>.Success(response);
+        return Result<IEnumerable<FolderResponse>>.Success(folders.Select(MapToResponse));
     }
 
     public async Task<Result<FolderResponse>> CreateAsync(
@@ -103,13 +88,7 @@ public class FolderService(
             return Result<FolderResponse>.Failure(Error.InternalServerError);
         }
 
-        return Result<FolderResponse>.Success(new FolderResponse(
-            folder.Id,
-            folder.Name,
-            folder.ParentFolderId,
-            folder.OwnerId,
-            folder.CreatedAt,
-            folder.UpdatedAt));
+        return Result<FolderResponse>.Success(MapToResponse(folder));
     }
 
     public async Task<Result> RenameAsync(Guid id, string name, Guid ownerId,
@@ -249,15 +228,7 @@ public class FolderService(
     {
         var folders = await folderRepository.GetTrashedRootsAsync(ownerId, cancellationToken);
 
-        var response = folders.Select(folder => new FolderResponse(
-            folder.Id,
-            folder.Name,
-            folder.ParentFolderId,
-            folder.OwnerId,
-            folder.CreatedAt,
-            folder.UpdatedAt));
-
-        return Result<IEnumerable<FolderResponse>>.Success(response);
+        return Result<IEnumerable<FolderResponse>>.Success(folders.Select(MapToResponse));
     }
 
     public async Task<Result> RestoreAsync(Guid id, Guid ownerId,
@@ -312,7 +283,7 @@ public class FolderService(
 
         return Result.Success();
     }
-    
+
     public async Task<Result> DeleteForeverAsync(Guid id, Guid ownerId,
         CancellationToken cancellationToken = default)
     {
@@ -355,4 +326,7 @@ public class FolderService(
 
         return Result.Success();
     }
+
+    private static FolderResponse MapToResponse(Folder folder) => new(folder.Id, folder.Name, folder.ParentFolderId,
+        folder.OwnerId, folder.CreatedAt, folder.UpdatedAt);
 }
