@@ -5,6 +5,8 @@ using Drive.Application.Files.Interfaces;
 using Drive.Application.Files.Services;
 using Drive.Application.Folders.Interfaces;
 using Drive.Application.Folders.Services;
+using Drive.Application.Sharing.Interfaces;
+using Drive.Application.Sharing.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IFolderService, FolderService>();
         services.AddScoped<IFileService, FileService>();
+        services.AddScoped<IItemShareService, ItemShareService>();
 
         return services;
     }
