@@ -3,6 +3,7 @@ using Drive.Application.Authentication.Interfaces;
 using Drive.Application.Files.Interfaces;
 using Drive.Application.Folders.Interfaces;
 using Drive.Application.Interfaces;
+using Drive.Application.Sharing.Interfaces;
 using Drive.Core.Entities;
 using Drive.Infrastructure.Persistence;
 using Drive.Infrastructure.Repositories;
@@ -56,6 +57,7 @@ public static class DependencyInjection
                 }));
 
         services.AddScoped<IObjectStorage, S3ObjectStorage>();
+        services.AddScoped<IItemShareRepository, ItemShareRepository>();
 
         return services;
     }
