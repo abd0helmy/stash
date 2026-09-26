@@ -11,10 +11,12 @@ public interface IUserRepository
     Task<User?> GetByEmailAsync(
         string email,
         CancellationToken cancellationToken = default);
-    
-    Task<User?> GetByIdentifierAsync(
-        string identifier,
+
+    Task<bool> IsEmailAvailableAsync(
+        string email,
         CancellationToken cancellationToken = default);
+
+
 
     Task<bool> IsEmailUniqueAsync(
         string email,

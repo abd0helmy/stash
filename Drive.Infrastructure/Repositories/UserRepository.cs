@@ -18,21 +18,21 @@ public class UserRepository(DriveDbContext context) : IUserRepository
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        return await context.Users.FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
+        var normalized = email.Trim().ToLower();
+        return await context.Users.FirstOrDefaultAsync(user => user.Email.ToLower() == normalized, cancellationToken);
     }
-    public async Task<User?> GetByIdentifierAsync(
-        string identifier,
-        CancellationToken cancellationToken = default)
+
+    public async Task<bool> IsEmailAvailableAsync(string email, CancellationToken cancellationToken = default)
     {
-        return await context.Users
-            .FirstOrDefaultAsync(
-                u => u.Email == identifier || u.Username == identifier,
-                cancellationToken);
+        var normalized = email.Trim().ToLower();
+        return !await context.Users.AnyAsync(u => u.Email.ToLower() == normalized, cancellationToken);
     }
+
+
 
     public async Task<bool> IsEmailUniqueAsync(string email, CancellationToken cancellationToken = default)
     {
-        return await context.Users.AnyAsync(user => user.Email == email, cancellationToken);
+        return await IsEmailAvailableAsync(email, cancellationToken);
     }
 
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)

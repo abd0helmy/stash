@@ -3,6 +3,7 @@ using System;
 using Drive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Drive.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(DriveDbContext))]
-    partial class DriveDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260926222749_RemoveUsernameAndMakeUpdatedAtNullable")]
+    partial class RemoveUsernameAndMakeUpdatedAtNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
