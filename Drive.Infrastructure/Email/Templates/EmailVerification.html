@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify your email address - Drive</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 32px 16px;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 560px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            color: #2563eb;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+        }
+        .header {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+        .content {
+            font-size: 15px;
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 32px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #2563eb;
+            color: #ffffff !important;
+            padding: 13px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+        .fallback-text {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+            word-break: break-all;
+            background-color: #f9fafb;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .fallback-link {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .footer {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 36px;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">Drive</div>
+        <div class="header">Verify your email address</div>
+        <div class="content">
+            <p>Welcome to <strong>Drive</strong>! We're excited to have you on board.</p>
+            <p>Please confirm that this is your email address by clicking the button below:</p>
+            <div class="btn-container">
+                <a href="{{VerificationUrl}}" class="btn" target="_blank">Verify Email Address</a>
+            </div>
+            <p>This verification link will expire in 24 hours. If you did not create a Drive account, you can safely disregard this message.</p>
+            <p>Having trouble with the button? Copy and paste this link into your browser:</p>
+            <div class="fallback-text">
+                <a href="{{VerificationUrl}}" class="fallback-link">{{VerificationUrl}}</a>
+            </div>
+        </div>
+        <div class="footer">
+            &copy; {{Year}} Drive. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>
