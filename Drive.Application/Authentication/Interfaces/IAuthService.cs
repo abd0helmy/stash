@@ -4,7 +4,7 @@ namespace Drive.Application.Authentication.Interfaces;
 
 public interface IAuthService
 {
-    Task<Result<AuthResponse>> RegisterAsync(
+    Task<Result<RegisterResponse>> RegisterAsync(
         RegisterRequest request,
         CancellationToken cancellationToken = default);
 
@@ -18,5 +18,21 @@ public interface IAuthService
 
     Task<Result> LogoutAsync(
         string refreshToken,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> VerifyEmailAsync(
+        VerifyEmailRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> ResendVerificationEmailAsync(
+        ResendVerificationEmailRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> ForgotPasswordAsync(
+        ForgotPasswordRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> ResetPasswordAsync(
+        ResetPasswordRequest request,
         CancellationToken cancellationToken = default);
 }

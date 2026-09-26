@@ -56,4 +56,10 @@ public sealed record Error(
             "Auth.InvalidRefreshToken",
             "The refresh token is invalid or has expired.",
             ErrorType.Unauthenticated);
+
+    public static readonly Error EmailNotVerified =
+        new(
+            "Auth.EmailNotVerified",
+            "Please verify your email address before logging in.",
+            ErrorType.Forbidden);
 }

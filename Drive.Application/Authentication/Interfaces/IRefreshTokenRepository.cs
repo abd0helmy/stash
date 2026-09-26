@@ -16,4 +16,8 @@ public interface IRefreshTokenRepository
     Task RevokeAsync(
         RefreshToken refreshToken,
         CancellationToken cancellationToken = default);
+
+    Task RevokeAllForUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }

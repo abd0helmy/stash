@@ -5,6 +5,10 @@ using Drive.Application.Folders.Interfaces;
 using Drive.Application.Interfaces;
 using Drive.Application.Sharing.Interfaces;
 using Drive.Core.Entities;
+using Drive.Infrastructure.Caching;
+using Drive.Infrastructure.Caching.Options;
+using Drive.Infrastructure.Email;
+using Drive.Infrastructure.Email.Options;
 using Drive.Infrastructure.Persistence;
 using Drive.Infrastructure.Repositories;
 using Drive.Infrastructure.Storage;
@@ -13,6 +17,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace Drive.Infrastructure;
 
@@ -22,7 +27,35 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+        services.AddScoped<IPasswordHasher<User>, Microsoft.AspNetCore.Identity.PasswordHasher<User>>();
+        services.AddScoped<Drive.Application.Authentication.Interfaces.IPasswordHasher, Identity.PasswordHasher>();
+
+        services
+            .AddOptions<RedisOptions>()
+            .Bind(configuration.GetSection(RedisOptions.SectionName));
+
+        var redisConnectionString = configuration.GetConnectionString("Redis")
+            ?? configuration.GetSection(RedisOptions.SectionName).GetValue<string>("ConnectionString")
+            ?? "localhost:6379";
+
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var config = ConfigurationOptions.Parse(redisConnectionString);
+            config.AbortOnConnectFail = false;
+            return ConnectionMultiplexer.Connect(config);
+        });
+
+        services.AddScoped<ICacheService, RedisCacheService>();
+        services.AddScoped<ITokenService, Identity.TokenService>();
+
+        services
+            .AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(EmailOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
+        services.AddScoped<IEmailService, EmailService>();
 
         services.AddDbContext<DriveDbContext>(options =>
             options.UseNpgsql(

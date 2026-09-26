@@ -37,4 +37,20 @@ public class RefreshTokenRepository(DriveDbContext dbContext)
 
         return Task.CompletedTask;
     }
+
+    public async Task RevokeAllForUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var activeTokens = await dbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in activeTokens)
+        {
+            token.RevokedAt = DateTime.UtcNow;
+        }
+
+        dbContext.RefreshTokens.UpdateRange(activeTokens);
+    }
 }
