@@ -8,6 +8,9 @@ public interface IFileRepository
         Guid id,
         Guid ownerId,
         CancellationToken cancellationToken = default);
+    
+    Task<File?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
 
     Task<IEnumerable<File>> GetByFolderIdAsync(
         Guid? folderId,

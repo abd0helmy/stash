@@ -9,6 +9,10 @@ public interface IFileService
         Guid id,
         Guid ownerId,
         CancellationToken cancellationToken = default);
+    
+    Task<Result<FileResponse>> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
 
     Task<Result<IEnumerable<FileResponse>>> GetByFolderIdAsync(
         Guid? folderId,

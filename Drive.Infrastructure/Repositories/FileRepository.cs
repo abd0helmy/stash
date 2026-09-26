@@ -13,6 +13,12 @@ public class FileRepository(DriveDbContext context) : IFileRepository
             .FirstOrDefaultAsync(file => file.Id == id && file.OwnerId == ownerId, cancellationToken);
     }
 
+    public async Task<File?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Files
+            .FindAsync([id], cancellationToken);
+    }
+
     public async Task<IEnumerable<File>> GetByFolderIdAsync(Guid? folderId, Guid ownerId,
         CancellationToken cancellationToken = default)
     {
@@ -50,11 +56,11 @@ public class FileRepository(DriveDbContext context) : IFileRepository
         return await context.Files
             .IgnoreQueryFilters()
             .Where(file => file.OwnerId == ownerId
-                        && file.FolderId != null
-                        && ids.Contains(file.FolderId.Value)
-                        && file.DeletedAt != null
-                        && file.DeletedAt >= minDeletedAt
-                        && file.DeletedAt <= maxDeletedAt)
+                           && file.FolderId != null
+                           && ids.Contains(file.FolderId.Value)
+                           && file.DeletedAt != null
+                           && file.DeletedAt >= minDeletedAt
+                           && file.DeletedAt <= maxDeletedAt)
             .ToListAsync(cancellationToken);
     }
 
@@ -78,7 +84,8 @@ public class FileRepository(DriveDbContext context) : IFileRepository
     {
         return await context.Files
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(file => file.Id == id && file.OwnerId == ownerId && file.DeletedAt != null, cancellationToken);
+            .FirstOrDefaultAsync(file => file.Id == id && file.OwnerId == ownerId && file.DeletedAt != null,
+                cancellationToken);
     }
 
     public async Task AddAsync(File file, CancellationToken cancellationToken = default)

@@ -39,6 +39,30 @@ public class FileService(
                 file.UpdatedAt));
     }
 
+    public async Task<Result<FileResponse>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var file = await fileRepository.GetByIdAsync(id, cancellationToken);
+
+        if (file is null)
+        {
+            return Result<FileResponse>.Failure(
+                new Error(
+                    "File.NotFound",
+                    "The specified file was not found.",
+                    ErrorType.NotFound));
+        }
+
+        return Result<FileResponse>.Success(
+            new FileResponse(
+                file.Id,
+                file.Name,
+                file.MimeType,
+                file.Size,
+                file.FolderId,
+                file.CreatedAt,
+                file.UpdatedAt));
+    }
+
     public async Task<Result<IEnumerable<FileResponse>>> GetByFolderIdAsync(Guid? folderId, Guid ownerId,
         CancellationToken cancellationToken = default)
     {
