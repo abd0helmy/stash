@@ -11,6 +11,9 @@ public class DriveDbContext(DbContextOptions<DriveDbContext> options) : DbContex
     public DbSet<Folder> Folders => Set<Folder>();
     public DbSet<File> Files => Set<File>();
     public DbSet<ItemShare> ItemShares => Set<ItemShare>();
+    public DbSet<Plan> Plans => Set<Plan>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<Usage> Usages => Set<Usage>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
