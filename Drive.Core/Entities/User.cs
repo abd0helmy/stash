@@ -20,4 +20,10 @@ public class User
 
     public ICollection<RefreshToken> RefreshTokens { get; set; }
         = new List<RefreshToken>();
+
+    public ICollection<Subscription> Subscriptions { get; set; }
+        = new List<Subscription>();
+
+    public ICollection<Usage> Usages { get; set; }
+        = new List<Usage>();
 }

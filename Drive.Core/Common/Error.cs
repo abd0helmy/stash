@@ -62,4 +62,44 @@ public sealed record Error(
             "Auth.EmailNotVerified",
             "Please verify your email address before logging in.",
             ErrorType.Forbidden);
+
+    public static readonly Error SubscriptionNotFound =
+        NotFound("Billing.SubscriptionNotFound", "The user does not have an active subscription.");
+
+    public static readonly Error PlanNotFound =
+        NotFound("Billing.PlanNotFound", "The requested subscription plan was not found.");
+
+    public static Error StorageQuotaExceeded(long usedBytes, long limitBytes, long requestedBytes) =>
+        Forbidden(
+            "Billing.StorageQuotaExceeded",
+            $"Storage quota exceeded. Used: {FormatBytes(usedBytes)}, Limit: {FormatBytes(limitBytes)}, Requested: {FormatBytes(requestedBytes)}");
+
+    public static Error ApiRequestQuotaExceeded(int usedRequests, int limitRequests) =>
+        Forbidden(
+            "Billing.ApiRequestQuotaExceeded",
+            $"Monthly API request quota exceeded. Used: {usedRequests}, Limit: {limitRequests}");
+
+    public static Error FileSizeLimitExceeded(long requestedBytes, long maxFileSizeBytes) =>
+        Validation(
+            "Billing.FileSizeLimitExceeded",
+            $"File size exceeds the plan maximum. Requested: {FormatBytes(requestedBytes)}, Max allowed: {FormatBytes(maxFileSizeBytes)}");
+
+    public static readonly Error SubscriptionInactive =
+        Forbidden("Billing.SubscriptionInactive", "The subscription is not active.");
+
+    public static Error FeatureNotAvailable(string feature) =>
+        Forbidden("Billing.FeatureNotAvailable", $"The feature '{feature}' is not available in the current plan.");
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] suffixes = ["B", "KB", "MB", "GB", "TB"];
+        int counter = 0;
+        decimal number = bytes;
+        while (Math.Round(number / 1024) >= 1 && counter < suffixes.Length - 1)
+        {
+            number /= 1024;
+            counter++;
+        }
+        return $"{number:0.##} {suffixes[counter]}";
+    }
 }
