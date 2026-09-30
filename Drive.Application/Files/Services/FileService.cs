@@ -1,3 +1,4 @@
+using Drive.Application.Billing.Common;
 using Drive.Core.Common;
 using Drive.Application.Files.DTOs;
 using Drive.Application.Files.Interfaces;
@@ -12,7 +13,8 @@ public class FileService(
     IFileRepository fileRepository,
     IUnitOfWork unitOfWork,
     IFolderRepository folderRepository,
-    IObjectStorage objectStorage) : IFileService
+    IObjectStorage objectStorage,
+    IQuotaService quotaService) : IFileService
 {
     public async Task<Result<FileResponse>> GetByIdAsync(Guid id, Guid ownerId,
         CancellationToken cancellationToken = default)
@@ -105,8 +107,14 @@ public class FileService(
             }
         }
 
-        var fileId = Guid.NewGuid();
+        // 1. Validate quota and reserve storage usage atomically
+        var reserveResult = await quotaService.ReserveStorageAsync(ownerId, size, cancellationToken);
+        if (reserveResult.IsFailure)
+        {
+            return Result<FileResponse>.Failure(reserveResult.Error!);
+        }
 
+        var fileId = Guid.NewGuid();
         var objectKey = $"users/{ownerId}/files/{fileId}";
 
         try
@@ -119,6 +127,9 @@ public class FileService(
         }
         catch
         {
+            // Roll back reserved storage quota if physical storage upload fails
+            await quotaService.ReleaseStorageAsync(ownerId, size, CancellationToken.None);
+
             return Result<FileResponse>.Failure(
                 Error.InternalServerError);
         }
@@ -150,6 +161,9 @@ public class FileService(
                     objectKey,
                     CancellationToken.None);
 
+                // Roll back reserved storage quota
+                await quotaService.ReleaseStorageAsync(ownerId, size, CancellationToken.None);
+
                 return Result<FileResponse>.Failure(
                     Error.InternalServerError);
             }
@@ -167,12 +181,16 @@ public class FileService(
                 // Keep the original database exception.
             }
 
+            // Roll back reserved storage quota
+            await quotaService.ReleaseStorageAsync(ownerId, size, CancellationToken.None);
+
             return Result<FileResponse>.Failure(
                 Error.InternalServerError);
         }
 
         return Result<FileResponse>.Success(MapToResponse(file));
     }
+
 
     public async Task<Result> RenameAsync(Guid id, string name, Guid ownerId,
         CancellationToken cancellationToken = default)
@@ -335,8 +353,11 @@ public class FileService(
             return Result.Failure(Error.InternalServerError);
         }
 
+        await quotaService.ReleaseStorageAsync(ownerId, file.Size, cancellationToken);
+
         return Result.Success();
     }
+
 
     private static FileResponse MapToResponse(File file) =>
         new(file.Id, file.Name, file.MimeType, file.Size, file.FolderId, file.CreatedAt, file.UpdatedAt);

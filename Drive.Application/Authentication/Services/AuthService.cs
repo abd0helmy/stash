@@ -7,6 +7,10 @@ using Drive.Core.Entities;
 using Drive.Core.Enums;
 using Drive.Application.Interfaces;
 
+using Drive.Application.Billing.Plans.Interfaces;
+using Drive.Application.Billing.Subscriptions.Interfaces;
+using Drive.Application.Billing.Usage.Interfaces;
+
 namespace Drive.Application.Authentication.Services;
 
 public class AuthService(
@@ -15,7 +19,10 @@ public class AuthService(
     IUserRepository userRepository,
     IRefreshTokenRepository refreshTokenRepository,
     IUnitOfWork unitOfWork,
-    IEmailService emailService) : IAuthService
+    IEmailService emailService,
+    ISubscriptionRepository subscriptionRepository,
+    IUsageRepository usageRepository,
+    IPlanRepository planRepository) : IAuthService
 {
     public async Task<Result<RegisterResponse>> RegisterAsync(
         RegisterRequest request,
@@ -60,6 +67,12 @@ public class AuthService(
 
             userRepository.Update(existingUser);
 
+            var existingSub = await subscriptionRepository.GetActiveByUserIdAsync(existingUser.Id, cancellationToken);
+            if (existingSub is null)
+            {
+                await CreateSubscriptionAndUsageForUserAsync(existingUser.Id, cancellationToken);
+            }
+
             if (await unitOfWork.SaveChangesAsync(cancellationToken) == 0)
             {
                 return Result<RegisterResponse>.Failure(Error.InternalServerError);
@@ -83,6 +96,9 @@ public class AuthService(
 
         await userRepository.AddAsync(user, cancellationToken);
 
+        // Assign Free Plan, Create Active Subscription & Initial Usage Period
+        await CreateSubscriptionAndUsageForUserAsync(user.Id, cancellationToken);
+
         if (await unitOfWork.SaveChangesAsync(cancellationToken) == 0)
         {
             return Result<RegisterResponse>.Failure(
@@ -95,6 +111,41 @@ public class AuthService(
         return Result<RegisterResponse>.Success(
             new RegisterResponse(user.Id, user.Email));
     }
+
+    private async Task CreateSubscriptionAndUsageForUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var freePlan = await planRepository.GetByIdAsync(DefaultPlans.FreePlanId, cancellationToken)
+                       ?? DefaultPlans.Free;
+
+        var now = DateTime.UtcNow;
+        var subscription = new Subscription
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PlanId = freePlan.Id,
+            Status = SubscriptionStatus.Active,
+            StartedAt = now,
+            CurrentPeriodStart = now,
+            CurrentPeriodEnd = now.AddMonths(1),
+            CancelAtPeriodEnd = false
+        };
+
+        await subscriptionRepository.AddAsync(subscription, cancellationToken);
+
+        var usage = new Core.Entities.Usage
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PeriodStart = subscription.CurrentPeriodStart,
+            PeriodEnd = subscription.CurrentPeriodEnd,
+            StorageUsedBytes = 0,
+            ApiRequests = 0,
+            BandwidthUsedBytes = 0
+        };
+
+        await usageRepository.AddAsync(usage, cancellationToken);
+    }
+
 
     public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request,
         CancellationToken cancellationToken = default)
