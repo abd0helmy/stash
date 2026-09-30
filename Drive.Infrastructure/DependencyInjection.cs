@@ -92,6 +92,18 @@ public static class DependencyInjection
         services.AddScoped<IObjectStorage, S3ObjectStorage>();
         services.AddScoped<IItemShareRepository, ItemShareRepository>();
 
+        // Billing Repositories
+        services.AddScoped<Drive.Application.Billing.Plans.Interfaces.IPlanRepository, PlanRepository>();
+        services.AddScoped<Drive.Application.Billing.Subscriptions.Interfaces.ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<Drive.Application.Billing.Usage.Interfaces.IUsageRepository, UsageRepository>();
+
+        // Payment Provider
+        services
+            .AddOptions<Billing.Stripe.StripeOptions>()
+            .Bind(configuration.GetSection(Billing.Stripe.StripeOptions.SectionName));
+        services.AddScoped<Drive.Application.Billing.Common.IPaymentService, Billing.Stripe.StripePaymentService>();
+        services.AddScoped<Drive.Application.Billing.Common.IStripeWebhookService, Billing.Stripe.StripeWebhookService>();
+
         return services;
     }
 }
