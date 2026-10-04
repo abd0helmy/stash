@@ -46,7 +46,7 @@ public class UsersController(
                 Error.NotFound("User.NotFound", "User profile was not found.")));
         }
 
-        if (!passwordHasher.Verify(user.PasswordHash, request.CurrentPassword))
+        if (!passwordHasher.Verify(request.CurrentPassword, user.PasswordHash))
         {
             return HandleResult(Result.Failure(
                 Error.Validation("Auth.InvalidCurrentPassword", "Current password does not match.")));
