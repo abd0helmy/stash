@@ -32,7 +32,7 @@ Stash is a backend API for cloud file storage. Users register with email verific
 | Cache / Tokens | Redis 7 (`StackExchange.Redis`) |
 | Object storage | S3-compatible via `AWSSDK.S3` (SeaweedFS in dev) |
 | Auth | JWT Bearer, ASP.NET Core Identity password hasher |
-| Email | SMTP (`System.Net.Mail`), Mailtrap-friendly |
+| Email | SMTP (`System.Net.Mail`), local Mailpit in dev |
 | Payments | Stripe.net 52 |
 | API docs | `Microsoft.AspNetCore.OpenApi` + Scalar |
 
@@ -63,7 +63,7 @@ flowchart LR
 ### Prerequisites
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download) (`net10.0`, tested with SDK 10.0.400)
-- Docker (Desktop on macOS works; images used: `postgres:16-alpine`, `redis:7-alpine`, `chrislusf/seaweedfs:latest`)
+- Docker (Desktop on macOS works; images used: `postgres:16-alpine`, `redis:7-alpine`, `chrislusf/seaweedfs:latest`, `axllent/mailpit:latest`)
 - (Optional, for bucket setup) AWS CLI
 
 ### 1. Clone
@@ -98,6 +98,8 @@ docker compose -f Docker/docker-compose.yml --env-file Docker/.env up -d
 | Redis | `6379` |
 | SeaweedFS S3 API | `8333` |
 | SeaweedFS filer / master | `8888` / `9333` |
+| Mailpit SMTP | `1025` |
+| Mailpit UI | `8025` |
 
 ### 4. Create the S3 bucket
 
@@ -113,13 +115,13 @@ dotnet user-secrets init
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=drive_db;Username=<your-postgres-user>;Password=<your-postgres-password>"
 dotnet user-secrets set "S3:AccessKey" "<your-s3-access-key>"
 dotnet user-secrets set "S3:SecretKey" "<your-s3-secret-key>"
-dotnet user-secrets set "Email:Username" "<your-smtp-username>"
-dotnet user-secrets set "Email:Password" "<your-smtp-password>"
 dotnet user-secrets set "JwtOptions:SecretKey" "$(openssl rand -base64 48)"
 dotnet user-secrets set "Stripe:SecretKey" "<your-stripe-secret-key>"
 dotnet user-secrets set "Stripe:PublishableKey" "<your-stripe-publishable-key>"
 dotnet user-secrets set "Stripe:WebhookSecret" "<your-stripe-webhook-secret>"
 ```
+
+> Email needs no secrets in Development: it points to the local Mailpit (`localhost:1025`, no auth) out of the box. Open <http://localhost:8025> to read verification/reset emails.
 
 ### 6. Apply migrations
 
@@ -195,10 +197,10 @@ curl -s -X POST http://localhost:5003/api/Files/upload \
 | `S3:ServiceUrl` | S3-compatible endpoint | `http://localhost:8333` |
 | `S3:AccessKey` / `S3:SecretKey` | S3 credentials | placeholders |
 | `S3:BucketName` | Bucket for file objects | `drive` |
-| `Email:Host` / `Email:Port` | SMTP server | `sandbox.smtp.mailtrap.io` / `587` |
+| `Email:Host` / `Email:Port` | SMTP server | `localhost` / `1025` (local Mailpit in dev) |
 | `Email:SenderEmail` / `Email:SenderName` | From address | `noreply@drive.com` / `Drive` |
-| `Email:Username` / `Email:Password` | SMTP credentials | placeholders |
-| `Email:EnableSsl` | STARTTLS | `true` |
+| `Email:Username` / `Email:Password` | SMTP credentials | empty in dev (Mailpit needs no auth) |
+| `Email:EnableSsl` | STARTTLS | `false` in dev (Mailpit), `true` for real providers |
 | `Email:ClientAppUrl` | Frontend links in emails | `http://localhost:5173` |
 | `JwtOptions:SecretKey` | Token signing key (min 32 chars) | placeholder |
 | `JwtOptions:Issuer` / `Audience` | Token validation | `DriveApi` / `DriveClient` |
@@ -228,7 +230,7 @@ Drive.sln                  # Solution (4 projects, no test projects)
 - **S3 errors on upload/download:** the `drive` bucket must exist (step 4). Also confirm `S3:ServiceUrl/AccessKey/SecretKey` match the SeaweedFS container.
 - **Database name mismatch:** `POSTGRES_DB` in `Docker/.env` must equal `Database=` in the connection string, otherwise migrations target a different database than the app reads.
 - **Secrets ignored:** `dotnet user-secrets` only loads in the `Development` environment. Production needs real env vars or a secret store.
-- **SMTP port on macOS:** use port `587` (STARTTLS). Port `465` (implicit SSL) is not supported by `SmtpClient`.
+- **SMTP port on macOS:** dev email goes to the local Mailpit (`localhost:1025`, no SSL). For a real provider use port `587` (STARTTLS) — port `465` (implicit SSL) is not supported by `SmtpClient`.
 - **`401` with empty body:** missing/expired Bearer token. Log in again and send `Authorization: Bearer <TOKEN>`.
 - **Over-limit requests:** `429 Too Many Requests` with code `Billing.ApiRequestQuotaExceeded` means the monthly quota is exhausted.
 

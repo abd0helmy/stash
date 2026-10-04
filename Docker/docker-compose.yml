@@ -52,6 +52,13 @@ services:
         exec weed server -dir=/data -master.port=9333 -volume.port=8080 \
           -filer -filer.port=8888 -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
 
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
 volumes:
   postgres_data:
   redis_data:
