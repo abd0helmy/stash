@@ -60,11 +60,19 @@ flowchart LR
 
 ## Getting Started
 
+### Quick start (one command)
+
+```bash
+./run.sh
+```
+
+This boots postgres/redis/seaweedfs/mailpit, fills in missing Development secrets with dev defaults, creates the S3 bucket, and runs the API at `http://localhost:5003`. Mailpit UI: `http://localhost:8025`. The manual steps below are only needed if you want to set things up piece by piece.
+
 ### Prerequisites
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download) (`net10.0`, tested with SDK 10.0.400)
-- Docker (Desktop on macOS works; images used: `postgres:16-alpine`, `redis:7-alpine`, `chrislusf/seaweedfs:latest`, `axllent/mailpit:latest`)
-- (Optional, for bucket setup) AWS CLI
+- Docker (Desktop on macOS works; images used: `postgres:16-alpine`, `redis:7-alpine`, `chrislusf/seaweedfs:latest`, `axllent/mailpit:latest`, plus a throwaway `amazon/aws-cli` for bucket setup — no local AWS CLI needed)
+- (Optional, only for manual bucket setup) AWS CLI
 
 ### 1. Clone
 
