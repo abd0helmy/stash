@@ -1,0 +1,11 @@
+bin/
+obj/
+out/
+.vs/
+.idea/
+.git/
+.gitignore
+Docker/.env
+*.user
+*.md
+LICENSE
