@@ -11,12 +11,13 @@ public class FilesController(
     IObjectStorage objectStorage) : BaseApiController
 {
     [HttpPost("upload")]
+    [Consumes("multipart/form-data")]
     [RequestSizeLimit(10L * 1024 * 1024 * 1024)] // 10 GB limit max
     public async Task<IActionResult> Upload(
-        [FromForm] IFormFile? file,
-        [FromForm] Guid? folderId,
+        [FromForm] UploadFileRequest request,
         CancellationToken cancellationToken)
     {
+        var file = request.File;
         if (file is null || file.Length == 0)
         {
             return BadRequest(new ProblemDetails
@@ -33,7 +34,7 @@ public class FilesController(
             file.FileName,
             file.ContentType,
             file.Length,
-            folderId,
+            request.FolderId,
             CurrentUserId,
             cancellationToken);
 
