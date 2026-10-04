@@ -44,8 +44,11 @@ public class ApiQuotaMiddleware(RequestDelegate next)
                 // Proceed with the request
                 await next(context);
 
-                // Increment request counter asynchronously
-                _ = usageService.IncrementApiRequestsAsync(userId, CancellationToken.None);
+                // Increment the request counter within the request scope.
+                // This must be awaited: fire-and-forget would keep using the
+                // scoped DbContext after the scope is disposed, tearing down
+                // its connection mid-query and poisoning the pool.
+                await usageService.IncrementApiRequestsAsync(userId, context.RequestAborted);
                 return;
             }
         }
