@@ -32,7 +32,7 @@ public class FileConfiguration : IEntityTypeConfiguration<File>
             .IsRequired();
 
         builder.Property(f => f.UpdatedAt)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.HasOne(f => f.Owner)
             .WithMany()
