@@ -244,7 +244,7 @@ Drive.sln                  # Solution (4 projects, no test projects)
 
 ## Contributing
 
-Open an issue or pull request against `main`. Keep commits in conventional style (`feat:`, `fix:`, `chore:`, `docs:`) and do not commit secrets — use `dotnet user-secrets` for local development.
+Found a bug or have an idea? Open an issue. To contribute a change, open a pull request against `main`. Use conventional commit prefixes such as `feat:`, `fix:`, `chore:`, and `docs:`. Keep secrets out of commits; use `dotnet user-secrets` for local development.
 
 ## License
 
